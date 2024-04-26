@@ -74,23 +74,43 @@ class CodeTableAmin
 	 */
 	function add_table_cpt_meta() {
 		add_meta_box(
+			'shortcode', // id
+			'Шорткод таблицы', // name
+			array( $this, 'table_shortcode_meta_callback' ),  // callback
+			'table', // post type
+			'normal', // context
+			'high' // priority
+		);
+		add_meta_box(
 			'section', // id
 			'Разделы', // name
-			array( $this, 'table_cpt_meta_callback' ),  // callback
+			array( $this, 'table_section_meta_callback' ),  // callback
 			'table', // post type
 			'normal', // context
 			'high' // priority
 		);
 	}
+	
+	/**
+	 * Add callback for shorcode table meta box.
+	 * 
+	 * @since 0.4
+	 */
+	function table_shortcode_meta_callback( $post ) {
+		wp_nonce_field( 'table_meta_box_nonce', 'custom_meta_box_nonce' );
+		$shortcode =  '[codetable id ="'.$post->ID.'"]';
+ 		echo '<label>';
+ 		echo '<p>'.$shortcode.'</p>';
+ 		echo '</label>';
+	}
 
 	/**
-	 * Add callback for meta box.
+	 * Add callback for sections table meta box.
 	 * 
 	 * @since 0.2
 	 */
-	function table_cpt_meta_callback( $post ) {
+	function table_section_meta_callback( $post ) {
 		wp_nonce_field( 'table_meta_box_nonce', 'custom_meta_box_nonce' );
-
 		// Get checkbox values.
 		$checked_sections = get_post_meta( $post->ID, 'sections', true );
 		$sections = get_terms( array(
