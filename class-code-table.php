@@ -38,10 +38,6 @@ class CodeTable
 			$atts,
 			'codetable',
 		);
-        $sections = get_terms( array(
-            'taxonomy' => 'section',
-            'hide_empty' => false,
-        ) );
     	require_once( CT_PLUGIN_DIR . 'templates/global/shortcode.php' );
     }
 }

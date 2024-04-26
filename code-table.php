@@ -2,7 +2,7 @@
 /**
  * Plugin Name:     Code Table
  * Description:     Add code comparison table.
- * Version:         0.2
+ * Version:         0.3
  */
 
 if ( !function_exists( 'add_action' ) ) {
@@ -10,7 +10,7 @@ if ( !function_exists( 'add_action' ) ) {
 	exit;
 }
 
-define( 'CT_VERSION', '0.2' );
+define( 'CT_VERSION', '0.3' );
 define( 'CT_MINIMUM_WP_VERSION', '5.8' );
 define( 'CT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 

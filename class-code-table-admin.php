@@ -92,7 +92,7 @@ class CodeTableAmin
 		wp_nonce_field( 'table_meta_box_nonce', 'custom_meta_box_nonce' );
 
 		// Get checkbox values.
-		$checked_sections = get_post_meta( $post->ID, 'checkbox_values', true );
+		$checked_sections = get_post_meta( $post->ID, 'sections', true );
 		$sections = get_terms( array(
             'taxonomy' => 'section',
             'hide_empty' => false,
@@ -100,7 +100,7 @@ class CodeTableAmin
 		foreach ( $sections as $section ) {
 			$is_checked = ( is_array( $checked_sections ) && in_array( $section->name, $checked_sections ) ) ? 'checked' : '';
 			echo '<label>';
-			echo '<input type="checkbox" name="checkbox_values[]" value="' . esc_attr( $section->name ) . '" ' . $is_checked . '> ' . esc_html( $section->name );
+			echo '<input type="checkbox" name="sections[]" value="' . esc_attr( $section->name ) . '" ' . $is_checked . '> ' . esc_html( $section->name );
 			echo '</label><br>';
 		}
 	}
@@ -122,11 +122,11 @@ class CodeTableAmin
 			return;
 		}
 		// Save or delete values.
-		if (isset($_POST['checkbox_values'])) {
-			$checkbox_values = (array) $_POST['checkbox_values'];
-			update_post_meta($post_id, 'checkbox_values', $checkbox_values);
+		if ( isset( $_POST['sections'] ) ) {
+			$sections = (array) $_POST['sections'];
+			update_post_meta( $post_id, 'sections', $sections );
 		} else {
-			delete_post_meta($post_id, 'checkbox_values');
+			delete_post_meta( $post_id, 'sections' );
 		}
 	}
 	
