@@ -9,6 +9,9 @@ class CodeTableAmin
 	public function __construct()
 	{
 	    add_action( 'admin_init', array( $this, 'init' ) );
+		add_action( 'init', array( $this, 'add_table_cpt' ) );
+		add_action(	'add_meta_boxes', array( $this, 'add_table_cpt_meta' ) );
+		add_action( 'save_post', array( $this, 'save_table_meta_box_data' ) );
 	    add_action( 'init', array( $this, 'add_code_cpt' ) );
 	    add_action( 'init', array( $this, 'add_section_tax' ) );
 	}
@@ -24,7 +27,113 @@ class CodeTableAmin
 	}
 	
 	/**
+	 * Add table custom post type.
+	 * 
+	 * @since 0.2
+	 */
+    public function add_table_cpt()
+    {
+        $labels = array(
+            'name'               => 'Таблицы кодов',
+            'singular_name'      => 'Таблица кодов',
+            'add_new'            => 'Добавить новую',
+            'add_new_item'       => 'Добавить новую таблицу кодов',
+            'edit_item'          => 'Редактировать таблицу кодов',
+            'new_item'           => 'Новая таблица кодов',
+            'view_item'          => 'Посмотреть таблицу кодов',
+            'search_items'       => 'Найти таблицу кодов',
+            'not_found'          => 'Таблиц кодов не найдено',
+            'not_found_in_trash' => 'В корзине таблиц кодов не найдено',
+            'parent_item_colon'  => '',
+            'menu_name'          => 'Таблицы кодов',
+        );
+        $supports = array(
+            'title',
+        );
+        register_post_type( 'table', array(
+            'labels'             => $labels,
+            'public'             => true,
+            'publicly_queryable' => true,
+            'show_ui'            => true,
+            'show_in_menu'       => true,
+            'query_var'          => true,
+            'rewrite'            => true,
+            'capability_type'    => 'post',
+            'has_archive'        => true,
+            'hierarchical'       => false,
+            'menu_position'      => null,
+            'supports'           => $supports,
+			'menu_icon'			 => 'dashicons-media-spreadsheet',
+        ));
+    }
+	
+	/**
+	 * Add meta box to table custom post type.
+	 * 
+	 * @since 0.2
+	 */
+	function add_table_cpt_meta() {
+		add_meta_box(
+			'section', // id
+			'Разделы', // name
+			array( $this, 'table_cpt_meta_callback' ),  // callback
+			'table', // post type
+			'normal', // context
+			'high' // priority
+		);
+	}
+
+	/**
+	 * Add callback for meta box.
+	 * 
+	 * @since 0.2
+	 */
+	function table_cpt_meta_callback( $post ) {
+		wp_nonce_field( 'table_meta_box_nonce', 'custom_meta_box_nonce' );
+
+		// Get checkbox values.
+		$checked_sections = get_post_meta( $post->ID, 'checkbox_values', true );
+		$sections = get_terms( array(
+            'taxonomy' => 'section',
+            'hide_empty' => false,
+        ) );
+		foreach ( $sections as $section ) {
+			$is_checked = ( is_array( $checked_sections ) && in_array( $section->name, $checked_sections ) ) ? 'checked' : '';
+			echo '<label>';
+			echo '<input type="checkbox" name="checkbox_values[]" value="' . esc_attr( $section->name ) . '" ' . $is_checked . '> ' . esc_html( $section->name );
+			echo '</label><br>';
+		}
+	}
+	
+	/**
+	 * Add meta box saving.
+	 * 
+	 * @since 0.2
+	 */
+	function save_table_meta_box_data( $post_id ) {
+		// Check nonce.
+		if ( !isset($_POST['custom_meta_box_nonce'] ) || !wp_verify_nonce( $_POST['custom_meta_box_nonce'], 'table_meta_box_nonce' ) ) {
+			return;
+		}
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( !current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		// Save or delete values.
+		if (isset($_POST['checkbox_values'])) {
+			$checkbox_values = (array) $_POST['checkbox_values'];
+			update_post_meta($post_id, 'checkbox_values', $checkbox_values);
+		} else {
+			delete_post_meta($post_id, 'checkbox_values');
+		}
+	}
+	
+	/**
 	 * Add code custom post type.
+	 * 
+	 * @since 0.2
 	 */
     public function add_code_cpt()
     {
@@ -40,7 +149,7 @@ class CodeTableAmin
             'not_found'          => 'Кодов не найдено',
             'not_found_in_trash' => 'В корзине кодов не найдено',
             'parent_item_colon'  => '',
-            'menu_name'          => 'Коды'
+            'menu_name'          => 'Коды',
         );
         $supports = array(
             'title',
@@ -59,11 +168,14 @@ class CodeTableAmin
             'hierarchical'       => false,
             'menu_position'      => null,
             'supports'           => $supports,
+			'menu_icon'			 => 'dashicons-media-code',
         ));
     }
     
     /**
      * Add section custom taxonomy.
+     * 
+     * @since 0.2
      */
     public function add_section_tax()
     {

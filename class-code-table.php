@@ -29,8 +29,15 @@ class CodeTable
      * 
      * @since 0.1
      */
-    public function add_codetable_shortcode()
+    public function add_codetable_shortcode( $atts )
     {
+		$atts = shortcode_atts(
+			array(
+				'id' => 1,
+			),
+			$atts,
+			'codetable',
+		);
         $sections = get_terms( array(
             'taxonomy' => 'section',
             'hide_empty' => false,
