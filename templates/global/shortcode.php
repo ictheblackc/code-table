@@ -40,7 +40,7 @@ foreach ( $table_sections as $table_section ) {
     </tr>
 	<div id="dropdown" style="display:none;position:absolute;"></div>
     <?php
-    for ( $i = 0 ; $i <= 3 ; $i++ ) {
+    for ( $i = 0 ; $i <= 1 ; $i++ ) {
         echo '<tr class="codetable__row">';
         foreach ( $all_section_codes as $section_codes ) {
 			$post_content = $section_codes->posts[$i]->post_content;

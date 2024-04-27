@@ -12,6 +12,7 @@ class CodeTableAmin
 		add_action( 'init', array( $this, 'add_table_cpt' ) );
 		add_action(	'add_meta_boxes', array( $this, 'add_table_cpt_meta' ) );
 		add_action( 'save_post', array( $this, 'save_table_meta_box_data' ) );
+		add_action( 'admin_menu', array( $this, 'code_custom_admin_menu' ) );
 	    add_action( 'init', array( $this, 'add_code_cpt' ) );
 	    add_action( 'init', array( $this, 'add_section_tax' ) );
 	}
@@ -72,7 +73,8 @@ class CodeTableAmin
 	 * 
 	 * @since 0.2
 	 */
-	function add_table_cpt_meta() {
+	function add_table_cpt_meta()
+	{
 		add_meta_box(
 			'shortcode', // id
 			'Шорткод таблицы', // name
@@ -96,7 +98,8 @@ class CodeTableAmin
 	 * 
 	 * @since 0.4
 	 */
-	function table_shortcode_meta_callback( $post ) {
+	function table_shortcode_meta_callback( $post )
+	{
 		wp_nonce_field( 'table_meta_box_nonce', 'custom_meta_box_nonce' );
 		$shortcode =  '[codetable id ="'.$post->ID.'"]';
  		echo '<label>';
@@ -109,7 +112,8 @@ class CodeTableAmin
 	 * 
 	 * @since 0.2
 	 */
-	function table_section_meta_callback( $post ) {
+	function table_section_meta_callback( $post )
+	{
 		wp_nonce_field( 'table_meta_box_nonce', 'custom_meta_box_nonce' );
 		// Get checkbox values.
 		$checked_sections = get_post_meta( $post->ID, 'sections', true );
@@ -130,7 +134,8 @@ class CodeTableAmin
 	 * 
 	 * @since 0.2
 	 */
-	function save_table_meta_box_data( $post_id ) {
+	function save_table_meta_box_data( $post_id )
+	{
 		// Check nonce.
 		if ( !isset($_POST['custom_meta_box_nonce'] ) || !wp_verify_nonce( $_POST['custom_meta_box_nonce'], 'table_meta_box_nonce' ) ) {
 			return;
@@ -217,4 +222,67 @@ class CodeTableAmin
         	'hierarchical'         => true,
     	));
     }
+	
+	/**
+	 * 
+	 */
+	function code_custom_admin_menu() {
+		add_menu_page(
+			'Импорт кодов', 
+			'Импорт кодов', 
+			'manage_options', 
+			'code_import', 
+			array( $this, 'code_import_page' ),
+			'dashicons-upload',
+			25
+		);
+	}
+
+	function code_import_page() {
+		?>
+		<h1>Импорт кодов</h1>
+		<form method="post" enctype="multipart/form-data">
+			<input type="file" name="code_file" accept=".tsv" required>
+			<button type="submit" name="import" class="button button-primary">Импортировать</button>
+		</form>
+		<?php
+		if ( isset($_POST['import'] ) ) {
+			if (isset($_FILES['code_file'])) {
+				$file = $_FILES['code_file'];
+				$file_path = $file['tmp_name'];
+				if ($file['type'] != 'text/tab-separated-values') {
+					echo '<div class="error"><p>Неправильный формат файла. Пожалуйста, загрузите TSV файл.</p></div>';
+					return;
+				}
+				if (file_exists($file_path)) {
+					$handle = fopen($file_path, 'r');
+					while (($data = fgetcsv($handle, 0, "\t")) !== FALSE) {
+						for ($i = 0; $i < count($data); $i += 3) {
+							$post_title = sanitize_text_field($data[$i]);
+							$post_taxonomy = sanitize_text_field($data[$i+1]);
+							$post_content = sanitize_text_field($data[$i+2]);
+							// Создание записи
+							$post_id = wp_insert_post([
+								'post_title' => $post_title,
+								'post_content' => $post_content,
+								'post_status' => 'publish',
+								'post_type' => 'code',
+							]);
+							if ( $post_id ) {
+								echo $post_title.'<br>';
+							}
+							// Назначение термина таксономии
+							if (!term_exists($post_taxonomy, 'section')) {
+								wp_insert_term($post_taxonomy, 'section');
+							}
+							wp_set_object_terms($post_id, $post_taxonomy, 'section');
+						}
+					}
+					fclose($handle);
+					echo '<div class="updated"><p>Записи успешно импортированы.</p></div>';
+				}
+			}
+		}
+	}
+
 }
